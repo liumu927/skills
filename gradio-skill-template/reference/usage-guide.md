@@ -160,7 +160,64 @@ with gr.Row():
     )
 ```
 
-**3.2 数值参数组件**
+**3.2 数据集目录组件（Dropdown + Textbox + Checkbox）**
+
+用于选择预设数据集目录或自定义路径。
+
+```python
+# 扫描数据集
+datasets = self._scan_datasets()
+dataset_mapping = {name: path for name, path in datasets}
+dataset_choices = list(dataset_mapping.keys())
+default_dataset_name = dataset_choices[0] if dataset_choices else ""
+default_dataset_path = dataset_mapping.get(default_dataset_name, "")
+
+# 构建组件
+with gr.Row():
+    dataset_dropdown = gr.Dropdown(
+        choices=dataset_choices,
+        label="数据集",
+        value=default_dataset_name,
+        info="选择预设数据集",
+        scale=2
+    )
+    dataset_path = gr.Textbox(
+        label="数据集路径",
+        value=default_dataset_path,
+        info="勾选自定义后可手动输入路径",
+        interactive=False,
+        scale=3
+    )
+    dataset_custom = gr.Checkbox(
+        label="自定义路径",
+        value=False,
+        info="勾选后可手动输入",
+        scale=1
+    )
+
+# 事件绑定（使用 common_utils）
+dataset_callbacks = common_utils.create_dataset_dir_callbacks(dataset_mapping, path_index=0)
+
+dataset_dropdown.change(
+    fn=dataset_callbacks['update_img_dir'],
+    inputs=[dataset_dropdown, dataset_custom],
+    outputs=[dataset_path]
+)
+
+dataset_custom.change(
+    fn=dataset_callbacks['toggle_img_dir'],
+    inputs=[dataset_custom, dataset_dropdown],
+    outputs=[dataset_path]
+)
+```
+
+**交互逻辑**：
+- 未勾选"自定义路径"：下拉选择更新 Textbox，Textbox 只读
+- 勾选"自定义路径"：Textbox 可编辑，用户可手动输入路径
+
+**参考实现**：`sj_inference.py`、`point_cloud_train.py`
+
+**3.3 数值参数组件**
 
 ```python
 with gr.Row():

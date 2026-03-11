@@ -81,17 +81,99 @@ cp .claude/skills/gradio-skill-template/templates/inference_tab_template.py \
 | 目录路径 | `gr.Textbox()` | 保存路径 |
 | 布尔参数 | `gr.Checkbox()` | `enable_xxx` |
 
-### 文件选择标准布局
+---
+
+## 标准组件布局
+
+### 1. 文件选择组件（Dropdown + Status + File）
+
+用于选择预设文件或上传自定义文件（如权重文件、配置文件）。
 
 ```python
 with gr.Row():
     with gr.Column(scale=2):
-        file_dropdown = gr.Dropdown(choices=choices_list, label="文件选择")
-        file_status = gr.Textbox(label="文件状态", interactive=False, lines=2)
-    file_upload = gr.File(label="上传文件（可选）", file_types=[".pt"], type="filepath", scale=1)
+        file_dropdown = gr.Dropdown(
+            choices=choices_list,
+            label="文件选择",
+            value=default_value
+        )
+        file_status = gr.Textbox(
+            label="文件状态",
+            value=f"已选择: {default_path}",
+            interactive=False,
+            lines=2
+        )
+    file_upload = gr.File(
+        label="上传文件（可选）",
+        file_types=[".pt", ".pth"],
+        type="filepath",
+        scale=1
+    )
 ```
 
 **交互逻辑**：上传文件优先于下拉选择。
+
+**参考实现**：`sj_inference.py` - 权重文件选择
+
+---
+
+### 2. 数据集目录组件（Dropdown + Textbox + Checkbox）
+
+用于选择预设数据集目录或自定义路径。
+
+```python
+# 扫描数据集
+datasets = self._scan_datasets()
+dataset_mapping = {name: path for name, path in datasets}
+dataset_choices = list(dataset_mapping.keys())
+default_dataset_name = dataset_choices[0] if dataset_choices else ""
+
+# 构建组件
+with gr.Row():
+    dataset_dropdown = gr.Dropdown(
+        choices=dataset_choices,
+        label="数据集",
+        value=default_dataset_name,
+        info="选择预设数据集",
+        scale=2
+    )
+    dataset_path = gr.Textbox(
+        label="数据集路径",
+        value=dataset_mapping.get(default_dataset_name, ""),
+        info="勾选自定义后可手动输入路径",
+        interactive=False,
+        scale=3
+    )
+    dataset_custom = gr.Checkbox(
+        label="自定义路径",
+        value=False,
+        info="勾选后可手动输入",
+        scale=1
+    )
+
+# 事件绑定（使用 common_utils）
+dataset_callbacks = common_utils.create_dataset_dir_callbacks(dataset_mapping, path_index=0)
+
+dataset_dropdown.change(
+    fn=dataset_callbacks['update_img_dir'],
+    inputs=[dataset_dropdown, dataset_custom],
+    outputs=[dataset_path]
+)
+
+dataset_custom.change(
+    fn=dataset_callbacks['toggle_img_dir'],
+    inputs=[dataset_custom, dataset_dropdown],
+    outputs=[dataset_path]
+)
+```
+
+**交互逻辑**：
+- 未勾选"自定义路径"：下拉选择更新 Textbox，Textbox 只读
+- 勾选"自定义路径"：Textbox 可编辑，用户可手动输入路径
+
+**参考实现**：`sj_inference.py`、`point_cloud_train.py` - 数据集目录选择
+
+---
 
 ### 不要使用 Slider
 
@@ -101,9 +183,11 @@ Slider 精度受限，用户无法输入精确值。使用 `gr.Number()` 代替�
 
 ```
 gradio_refactor/tabs/
-├── mc_train.py      # 两阶段训练、GIF 预览
-├── bimodal_train.py # 多数据集选择
-└── visible_train.py # 基础训练布局
+├── mc_train.py        # 两阶段训练、GIF 预览
+├── bimodal_train.py   # 多数据集选择
+├── sj_inference.py    # 文件选择、数据集目录组件参考
+├── point_cloud_train.py # 数据集目录组件参考
+└── visible_train.py   # 基础训练布局
 ```
 
 ---
