@@ -204,10 +204,14 @@ pred_gallery = gr.Gallery(
 )
 ```
 
-**数据合并逻辑**：将两组图片交替排列，确保左列显示标准、右列显示对抗。
+**数据合并逻辑**：将两组图片交替排列，确保左列显示标准、右列显示对抗。**每张图片必须带标签**，格式为 `(路径, "标准|文件名")` 或 `(路径, "对抗|文件名")`。
 
 ```python
-# 合并图片为对比列表：[std1, adv1, std2, adv2, ...]
+# 收集图片时添加标签：(路径, "类型|文件名")
+standard_images = [(os.path.join(dir_path, f), f"标准|{f}") for f in standard_png_files]
+adv_images = [(os.path.join(dir_path, f), f"对抗|{f}") for f in adv_png_files]
+
+# 合并图片为对比列表：[(std1, "标准|xxx"), (adv1, "对抗|xxx"), ...]
 max_images = 10
 merged_images = []
 for i in range(max_images):
@@ -216,7 +220,7 @@ for i in range(max_images):
     if i < len(adv_images):
         merged_images.append(adv_images[i])
 
-return merged_images  # 返回给单一 Gallery
+return merged_images  # 返回给单一 Gallery，每张图片下方显示标签
 ```
 
 **参考实现**：`point_cloud_inference.py` - 预测结果对比展示
