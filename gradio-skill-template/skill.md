@@ -267,13 +267,18 @@ outputs=[status, logs, download_file]
 
 ### 4. 清空日志必须同时清空评估结果
 
-`_clear_logs` 方法应该清空所有结果显示组件（Gallery、Image、Textbox、File）。
+`_clear_logs` 方法应该清空所有结果显示组件（Gallery、Image、Textbox、File），并设置标志防止刷新时重新加载。
 
 ```python
+def __init__(self):
+    # ...
+    self._results_cleared = False  # 标记结果是否被清空
+
 def _clear_logs(self):
     """清空日志和评估结果"""
     self.log_handler.clear_logs()
     self._task_completed = False
+    self._results_cleared = True  # 标记已清空，防止刷新时重新加载
     return (
         "日志已清空",           # status_text
         "",                     # output (日志)
@@ -283,6 +288,22 @@ def _clear_logs(self):
         "",                     # stats (清空统计)
         gr.update(value=None, visible=False)  # file (隐藏下载)
     )
+
+def _start_task(self, *args):
+    """启动任务时重置清空标志"""
+    self._results_cleared = False  # 允许显示结果
+    # ...
+
+def _refresh_logs(self):
+    """刷新时检查清空标志"""
+    if self._results_cleared:
+        return (  # 返回空结果
+            "评估已停止", self.log_handler.get_logs(),
+            "等待开始评估...",
+            [], None, None, "",
+            gr.update(value=None, visible=False)
+        )
+    # 正常刷新逻辑...
 ```
 
 ### 5. 下载组件使用 File 而非按钮
@@ -354,6 +375,52 @@ gradio_refactor/tabs/
 - 目录选择回调逻辑
 - 权重状态更新逻辑
 - 直接 print 日志（使用 LogHandler）
+
+### 启动前清理旧数据
+
+**重要**：在每次评估/训练/推理任务启动前，必须清理旧的结果数据，避免界面一开始时展示旧数据。
+
+使用 `common_utils.clear_old_inference_data()` 函数：
+
+```python
+def _start_task(self, *args):
+    """启动任务"""
+    # ...参数处理...
+
+    # 清理旧的结果数据（在启动任务前）
+    self.log_handler.add_log("🗑️ 清理旧数据: 结果目录")
+    common_utils.clear_old_inference_data(self.result_dir, self.log_handler.add_log)
+
+    # 创建必要的目录
+    os.makedirs(self.result_dir, exist_ok=True)
+
+    # 启动任务...
+```
+
+**典型使用场景**：
+
+| Tab | 清理目录 | 参考代码 |
+|-----|----------|----------|
+| 推理 Tab | 推理结果保存目录 | `sj_inference.py:411` |
+| 训练 Tab | 补丁保存目录 | `sj_train.py:254` |
+| 迷彩训练 | textures/gif 目录 | `mc_train.py:192-193` |
+| 迷彩推理 | 生成/评估输出目录 | `mc_inference.py:283-285` |
+| 点云评估 | 对抗评估结果目录 | `point_cloud_inference.py` |
+
+**函数签名**：
+
+```python
+def clear_old_inference_data(save_dir, log_callback=None):
+    """清理旧的推理数据
+
+    Args:
+        save_dir: 要清理的结果目录路径
+        log_callback: 日志回调函数（可选），用于记录清理操作
+
+    Returns:
+        bool: 是否成功清理（True表示成功或目录不存在，False表示清理失败）
+    """
+```
 
 ---
 
