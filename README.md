@@ -10,14 +10,15 @@ E:\project\skills\            ← git 仓库根
 │   ├── code-dojo\
 │   ├── dingtalk-integration\
 │   └── ...
-├── officecli\                ← 三方 skills（平铺在仓库根）
-├── frontend-design\
-├── source-command-zcf-git-worktree\
+├── download\                 ← 三方 skills（放这里）
+│   ├── frontend-design\
+│   ├── officecli\
+│   └── source-command-zcf-git-worktree\
 ├── setup.cmd                 ← 一键在各 agent 端建立联接
 └── README.md
 ```
 
-判定规则：自建 skill 放 `my-skills\`，下载的三方 skill 放仓库根（两者都必须是含 `SKILL.md` 的目录，setup.cmd 靠这个自动识别）。
+判定规则：自建 skill 放 `my-skills\`，下载的三方 skill 放 `download\`（两者都必须是含 `SKILL.md` 的目录，setup.cmd 靠这个自动识别）。
 
 ## 当前技能清单
 
@@ -48,15 +49,15 @@ E:\project\skills\            ← git 仓库根
    setup.cmd
    ```
 
-   脚本会扫描 `my-skills\` 和仓库根下所有含 `SKILL.md` 的目录，在每个 agent 的 `skills\` 目录里逐个建立 junction。新增 agent 工具时，在 `setup.cmd` 的 `for %%D in (...)` 列表里加一项即可。
+   脚本会扫描 `my-skills\` 和 `download\` 下所有含 `SKILL.md` 的目录，在每个 agent 的 `skills\` 目录里逐个建立 junction，并自动修复挪动位置后产生的断链。新增 agent 工具时，在 `setup.cmd` 的 `for %%D in (...)` 列表里加一项即可。
 
 3. 重启各 agent 工具加载 skills。
 
 ## 日常使用
 
 - **新增自建 skill**：在 `my-skills\` 下建目录（含 `SKILL.md`），跑一次 `setup.cmd`，然后 `git commit` + `push`。
-- **新增三方 skill**：下载后把 skill 目录放到仓库根（含 `SKILL.md`），跑一次 `setup.cmd`，提交推送。
-- **修改 / 删除 skill**：直接改仓库内内容，所有 agent 立即生效；删除后跑一次 `setup.cmd` 清理残留联接（目前需手动删 agent 端对应 junction）。
+- **新增三方 skill**：下载后把 skill 目录放到 `download\`（含 `SKILL.md`），跑一次 `setup.cmd`，提交推送。
+- **修改 / 删除 skill**：直接改仓库内内容，所有 agent 立即生效；删除或挪动目录后跑一次 `setup.cmd`，断链联接会被自动清理重建。
 - 各 agent 的 `skills\` 目录里全是 junction，不要在里面直接创建文件——改到仓库里来。
 
 ## 技能开发约定
