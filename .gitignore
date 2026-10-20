@@ -19,3 +19,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Cursor history / local
+.specstory/
+.cursorindexingignore
