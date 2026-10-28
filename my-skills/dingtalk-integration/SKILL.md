@@ -1,6 +1,6 @@
 ---
 name: dingtalk-integration
-description: 钉钉低代码集成（审批表单动态下拉、自建连接器 OAuth2.0 鉴权、连接平台连接流循环判重、AI 表格自动化回写、unionId/userId 转换）的配置陪跑与排错。当用户提到钉钉审批表单选项读多维表、连接器、连接流、AI 表格自动化、审批节点按项目负责人派单、批量回写 AI 表格，或贴出钉钉报错（permission deny、fail to find field、fields_error、fetch_token_result_not_mapping_config、conditions 相关错误等）时使用。不用于外部系统接入钉钉登录、免登、SSO、机器人、小程序开发。
+description: 钉钉低代码集成（审批表单动态下拉、自建连接器 OAuth2.0 鉴权、连接平台连接流循环判重、AI 表格自动化回写、unionId/userId 转换）的配置陪跑与排错。当用户提到钉钉审批表单选项读多维表、连接器、连接流、AI 表格自动化、审批节点按项目负责人派单、批量回写 AI 表格，或贴出钉钉报错（permission deny、fail to find field、fields_error、fetch_token_result_not_mapping_config、conditions 相关错误等）时使用。也覆盖审批通过后 HTTP 节点回调自有系统（公网边缘中转回内网、同父域名拆分解析、断链补偿队列）。不用于外部系统接入钉钉登录、免登、SSO、机器人、小程序开发。
 ---
 
 # 钉钉低代码集成
@@ -18,6 +18,7 @@ description: 钉钉低代码集成（审批表单动态下拉、自建连接器 
 | 审批流程的第一个节点要自动派给表里的项目负责人 | 流程级连接器绑定 | `references/01` + `references/02` + `references/03-approval-process.md` |
 | 审批通过后，把审批明细逐条写进 AI 表格（含判重更新） | 连接平台连接流 | `references/01` + `references/04-connection-flow.md` |
 | 表里的 unionId 要批量换成 userId 回写 | AI 表格自动化流程 | `references/05-aitable-automation.md` |
+| 审批结束后要把数据写进**自有系统**（内网业务系统，不是 AI 表格）/ 看懂钉钉→公网边缘服务器→办公网内网系统的链路 / 同父域名拆分解析 / 断链补偿 | 连接器 HTTP 节点 + 公网边缘中转 | `references/09-http-callback-edge-relay.md` |
 | 不确定该用表单、流程还是连接流 | 先看下方"载体能力边界" | — |
 | 已经配了但报错/数据不对 | 排错 | `references/07-troubleshooting.md` |
 
@@ -94,3 +95,4 @@ description: 钉钉低代码集成（审批表单动态下拉、自建连接器 
 | `references/06-data-model.md` | userId/unionId/operatorId、Notable API、字段值形态、时间 |
 | `references/07-troubleshooting.md` | 跨场景踩坑总表、报错决策树 |
 | `references/08-project-instance.md` | 本项目已实测参数与编码（含实例值，注意保密） |
+| `references/09-http-callback-edge-relay.md` | 审批后 HTTP 节点回调自有系统：公网边缘中转（nginx+relay）、同父域名拆分解析、OpenVPN 回内网、断链补偿队列、验证与排障 |
