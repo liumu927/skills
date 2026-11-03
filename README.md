@@ -34,6 +34,7 @@ E:\project\skills\            ← git 仓库根
 | frontend-design | 三方 | 高质量前端界面设计与实现 |
 | officecli | 三方 | 用 officecli CLI 创建/检查/修改 Office 文档 |
 | source-command-zcf-git-worktree | 三方 | Git worktree 管理 |
+| skills-manager | 自建 | 管理本仓库本身：新增/删除 skill、跑 setup.cmd、提交推送 |
 
 ## 新机器部署
 
