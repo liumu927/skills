@@ -143,6 +143,9 @@ condition value should be an array
 | 回调 302 带 `error=dingtalk_bad_state` | state 过期（>10 分钟）或跨进程（多实例/重启）→ 重试；多实例需换共享存储 |
 | 回调 302 带 `error=dingtalk_exchange_failed` | 看服务端日志：多为 `api.dingtalk.com` 出站被拦（防火墙/安全组），或 secret 不对 |
 | 扫码页本身打不开 | 用户设备到 `login.dingtalk.com` 不通（办公网出站策略） |
+| **在家 / 手机流量 / 出差扫码后失败或回调 404** | **路径 B 的预期行为**：只登记了 `http://<办公网IP>:<端口>/...`，外网不可达。不是故障。要移动办公就改路径 A/C |
+| 换机/换网段后全公司都登不上 | 路径 B 登记的 IP 变了（DHCP 未保留）→ 回钉钉后台改重定向 URL 并**重新发布版本** + 改 `DINGTALK_REDIRECT_URI` |
+| 同一个 IP 改了端口就登录失败 | 路径 B 按**逐字符**匹配，端口变了必须回钉钉后台同步 |
 | 回调后落到 404 `{"success":false,"message":"not found"}` | **这不是本系统的响应**——浏览器把回调域名解析到了别处（旧公网 IP/别的服务，典型是审批回调占用的边缘服务器）。`nslookup` 应返回登记时规划的地址 |
 | `nslookup` 返回正确，浏览器仍 404/打不开 | 浏览器没走系统 DNS：代理分流 / DoH / 浏览器 host 缓存。跑 `scripts/client-dns-check.ps1` 逐通道定位 |
 | **无痕窗口能用、普通窗口不能用** | 差异在"窗口自己的东西"：①扩展（无痕默认不加载，带 proxy/webRequest/declarativeNetRequest 权限的是头号嫌疑）②普通窗口自己的 DNS 缓存/连接池/HTTP 缓存。处置：禁扩展 + 清 DNS 缓存 + 强刷 |

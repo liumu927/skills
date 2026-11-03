@@ -63,6 +63,7 @@
 | 项 | 占位符 | 从哪取 | 怎么验证 |
 |---|---|---|---|
 | 登录应用 Client ID/Secret | `<login-client-id>` / `<login-secret>` | 开放平台（**与审批应用分开**） | `/diag` 配置齐全 |
+| 重定向 URL 登记形态 | `<http://<办公网IP>:<端口>/api/auth/dingtalk/callback>` 或 `<域名>` | 登录与分享（**默认用内网 IP 形态，最简**） | 与 `DINGTALK_REDIRECT_URI` 逐字符一致 |
 | 重定向 URL | `<https://domain/api/auth/dingtalk/callback>` | 登录与分享 | 与 `DINGTALK_REDIRECT_URI` 逐字符一致 |
 | 权限 | `Contact.User.Read` | 权限管理 | 取用户信息 200 |
 | 发布状态 | 已发布 | 版本管理 | 改完必须重发版 |

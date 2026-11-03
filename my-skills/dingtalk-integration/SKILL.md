@@ -32,7 +32,7 @@ description: >-
 | 数据要出钉钉 → 腾讯云中间件 → 办公网自有系统 | S5/S6 | [05](references/05-edge-middleware.md) + [06](references/06-office-lan-pull.md) |
 | 现在走 OpenVPN 转发，想改成落盘+内网拉取 | S5/S6 | [11-migration-push-to-pull.md](references/11-migration-push-to-pull.md) |
 | **落盘方案能不能过合规**（数据留在公网服务器） | S0 | [12-compliance-gate.md](references/12-compliance-gate.md) |
-| 网页系统要接钉钉扫码登录 / 免登 / SSO | S7 | [07-login.md](references/07-login.md) |
+| 网页系统要接钉钉扫码登录 / 免登 / SSO | S7 | [07-login.md](references/07-login.md)（**内网系统默认走内网 IP 登记，最简**） |
 | 已经配了但报错/数据不对 | — | [09-troubleshooting.md](references/09-troubleshooting.md) |
 | 不确定整条链路怎么搭、为什么这么设计 | S0 | [00-pipeline.md](references/00-pipeline.md) |
 
