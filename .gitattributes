@@ -1,0 +1,6 @@
+# 钩子与 shell 脚本必须是 LF，否则 Windows 上 checkout 成 CRLF 后 sh 无法执行
+.githooks/** text eol=lf
+*.sh text eol=lf
+
+# 内部实值文件永不入库（第二道保险，第一道见 .gitignore）
+my-skills/**/references/10b-instance-values.md export-ignore

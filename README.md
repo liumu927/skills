@@ -61,6 +61,23 @@ E:\project\skills\            ← git 仓库根
 - **修改 / 删除 skill**：直接改仓库内内容，所有 agent 立即生效；删除或挪动目录后跑一次 `setup.cmd`，断链联接会被自动清理重建。
 - 各 agent 的 `skills\` 目录里全是 junction，不要在里面直接创建文件——改到仓库里来。
 
+## 提交前检查（防实值外泄）
+
+仓库带一个 `pre-commit` 钩子，提交时扫描暂存文件，命中以下任一项就阻断：
+
+- 钉钉 Client ID（`ding` + 16 位）
+- 审批模板真实字段编码（形如 `TextField_` 后接 6 位以上字母数字；占位写法 `TextField_<编码>` 不拦）
+- 组织内网域名（`gitlab.idrl.ac.cn` 放行）与具体内网 IP（`192.168.0.0/16` 这类网段放行）
+- 带 IP 的共享盘 UNC 路径、真实 `unionId` 赋值
+
+新机器克隆后启用一次：
+
+```bash
+git config core.hooksPath .githooks
+```
+
+**组织真实值不要放进本仓库**：放包外私有文件（例：`%USERPROFILE%\_private\<项目>\instance-values.md`），skill 内只写 `<占位符>`。确需绕过用 `git commit --no-verify`。
+
 ## 技能开发约定
 
 每个技能遵循以下结构：

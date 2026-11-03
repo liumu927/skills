@@ -38,7 +38,7 @@ description: >-
 
 涉及"这个位置要哪套 ID、字段值长什么样、时间为什么 +1 天"→ [08-data-model.md](references/08-data-model.md)。需要**填空用的参数模板**（每项从哪取、怎么验证）→ [10-project-instance.md](references/10-project-instance.md)。
 
-> 本组织的真实实例值**不在本包内**：请自行维护一份本地文件（建议 `references/10b-instance-values.md`，已在 `.gitignore` 中），只在本机保存，不要提交、不要外发。
+> 本组织的真实实例值**不在本包内**，也**不要放进 skill 目录**：真实值落在包外的私有文件（例：`%USERPROFILE%\_private\dingtalk-integration\instance-values.md`），只在本机保存。包内 `references/10b-instance-values.md` 只保留占位符结构与"已验证"结论，可安全外发。
 
 ## 六段流水线
 
@@ -150,27 +150,10 @@ S7 钉钉登录：用户身份侧，与上面数据链路正交（用独立应�
 
 新增：`00-pipeline.md`、`03-form-data-out.md`、`06-office-lan-pull.md`、`11-migration-push-to-pull.md`、`12-compliance-gate.md`。
 
-## 维护者：发布与同步
+## 维护者：仓库与发布
 
-本 skill 同时发布到两个平台，**只在一处修改**（源仓库 `skills/my-skills/dingtalk-integration`），然后一条命令同步：
+**维护主仓库是内网 GitLab**：`gitlab.idrl.ac.cn/idrl_developer/informatization/skills`（本地克隆 `E:\project\idrl-skills`，该仓库下 `dingtalk-integration/` 即本目录）。主库就是 GitLab，`git add / commit / push` 即发布给同事，**没有生成/同步脚本**——旧的 `sync-gitlab-skills.sh` 双库同步已废弃（`8fbf1c1` 撤销，见 GitLab 侧本包 SKILL.md）。
 
-| 平台 | 内容范围 | 说明 |
-|---|---|---|
-| GitHub（`origin`） | 整个 skills 仓库（全部 skill） | 完整镜像 |
-| 内网 GitLab（`gitlab`） | 仅本 skill 目录，位于 `dingtalk-integration/` 下 | 内网共享 skills 的子集视图 |
+**本目录（GitHub `liumu927/skills` 的 `my-skills/dingtalk-integration/`）是人工归档**，不自动同步：改完 GitLab 主库后手动复制过来，可能略滞后，**以 GitLab 为准**。
 
-```bash
-cd <skills 仓库根>
-git sync      # = git push origin main && sh ./sync-gitlab-skills.sh
-```
-
-要点：
-
-- **GitLab 侧是发布视图，不要在那里改**——它的树由源仓库生成，直接提交会在下次同步时被静默覆盖（快进推送、无冲突提示）。
-- 脚本已带**防覆盖守护**：远端最新提交若不是自动发布产生的（主题不以 `sync(` 开头），同步会**中止**并列出会被覆盖的差异与作者。此时二选一：
-  - `sh sync-gitlab-skills.sh --import` —— 把同事的改动按路径映射打回源仓库工作区，复查后自行提交（推荐，不丢东西）；
-  - `FORCE_OVERWRITE=1 sh sync-gitlab-skills.sh` —— 确认可丢弃，强制覆盖。
-  - 注意：`--import` 提交后，下一个真实改动推送仍需一次 `FORCE_OVERWRITE=1`，之后恢复正常。
-- 加第二个共享 skill：`sh sync-gitlab-skills.sh dingtalk-integration <另一个>`，或改脚本里的默认 `SKILLS` 列表。
-- 两个平台**历史互相独立**（GitLab 侧由脚本生成提交），不要互推。
-- 内部实值文件（`10b-instance-values.md`）已在 `.gitignore`，**不要用 `git add -f` 强行加入**。
+- 真实实例值**不放在本包内**：落在包外私有文件（例：`%USERPROFILE%\_private\dingtalk-integration\instance-values.md`）。包内 `10b-instance-values.md` 只有占位符与验证结论，`.gitignore` 只是第二道保险，**不要用 `git add -f` 强行加入任何含实值的文件**。

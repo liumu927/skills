@@ -48,12 +48,12 @@
 
 | 表格列 | 表单字段 | 编码 | 值形态 |
 |---|---|---|---|
-| 设备序列号 | 产品序列号 | `TextField_1L08T4SNTE328` | 文本 |
-| 规格型号 | 资产型号 | `TextField_31IT80NMT2S0` | 文本 |
-| 唯一识别码 | 唯一识别码 | `TextField_1ESSHW5Y7VVGG` | 文本 |
-| 资产名称 | 资产名称 | `TextField-K2AD4O5B` | 文本（含连字符） |
-| 位置 | 后存放位置 | `DDSelectField_V97PQRFM2KG0` | 对象 `{label, value}` |
-| 使用人 | 后使用人 | `InnerContactField_NUD2OJMLF400` | **数组** `["userId"]` |
+| 设备序列号 | 产品序列号 | `TextField_<编码>` | 文本 |
+| 规格型号 | 资产型号 | `TextField_<编码>` | 文本 |
+| 唯一识别码 | 唯一识别码 | `TextField_<编码>` | 文本 |
+| 资产名称 | 资产名称 | `TextField-<编码>` | 文本（含连字符） |
+| 位置 | 后存放位置 | `DDSelectField_<编码>` | 对象 `{label, value}` |
+| 使用人 | 后使用人 | `InnerContactField_<编码>` | **数组** `["userId"]` |
 
 新表单 = 全套新编码，必须重新拿。
 
@@ -64,7 +64,7 @@ chip = 从变量树点选插入的蓝色变量，**禁止手打变量路径**。
 | 用途 | 写法 |
 |---|---|
 | 下划线编码子字段 | `4.本次循环内容.本次循环数据.TextField_编码` |
-| 连字符编码子字段 | `JACKSONJSONPATHEVAL(4.本次循环内容.本次循环数据,'$["TextField-K2AD4O5B"]')` |
+| 连字符编码子字段 | `JACKSONJSONPATHEVAL(4.本次循环内容.本次循环数据,'$["TextField-<编码>"]')` |
 | 下拉取显示值 | `JACKSONJSONPATHEVAL(4.本次循环内容.本次循环数据,'$.DDSelectField_编码.label')` |
 | 联系人取第一个人 | `JACKSONJSONPATHEVAL(4.本次循环内容.本次循环数据,'$.InnerContactField_编码[0]')` |
 | 人员列传值（直连 API） | `'使用人': [{'unionId': 流程参数.当前员工UserId}]` |
@@ -75,7 +75,7 @@ chip = 从变量树点选插入的蓝色变量，**禁止手打变量路径**。
 完整的"是"分支 fields 示例：
 
 ```
-{'位置': JACKSONJSONPATHEVAL(4.本次循环内容.本次循环数据,'$.DDSelectField_V97PQRFM2KG0.label'),'使用人': [{'unionId': 流程参数.当前员工UserId}]}
+{'位置': JACKSONJSONPATHEVAL(4.本次循环内容.本次循环数据,'$.DDSelectField_<编码>.label'),'使用人': [{'unionId': 流程参数.当前员工UserId}]}
 ```
 
 ## 两个连接器动作的配置基准
