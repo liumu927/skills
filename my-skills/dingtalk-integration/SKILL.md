@@ -1,98 +1,145 @@
 ---
 name: dingtalk-integration
-description: 钉钉低代码集成（审批表单动态下拉、自建连接器 OAuth2.0 鉴权、连接平台连接流循环判重、AI 表格自动化回写、unionId/userId 转换）的配置陪跑与排错。当用户提到钉钉审批表单选项读多维表、连接器、连接流、AI 表格自动化、审批节点按项目负责人派单、批量回写 AI 表格，或贴出钉钉报错（permission deny、fail to find field、fields_error、fetch_token_result_not_mapping_config、conditions 相关错误等）时使用。也覆盖审批通过后 HTTP 节点回调自有系统（公网边缘中转回内网、同父域名拆分解析、断链补偿队列）。不用于外部系统接入钉钉登录、免登、SSO、机器人、小程序开发。
+description: >-
+  钉钉审批与自有系统之间的整条链路：多维表数据接进审批表单（动态下拉/回显/按项目派单）、
+  审批通过后把表单数据接出（触发时机与触发机制选择）、连接器 OAuth2.0 与自建应用鉴权、
+  连接平台连接流编排、腾讯云边界中间件的两种形态（透明转发+OpenVPN / 落盘+办公网主动拉取）、
+  办公网内网系统接入，以及网页系统接入钉钉扫码登录/工作台免登。
+  当用户提到：钉钉审批表单选项读多维表、连接器、连接流、AI表格自动化、审批节点按负责人派单、
+  审批数据同步到自有系统、腾讯云中间件/边缘服务器/nginx/relay/OpenVPN/断链补偿/数据落盘拉取、
+  unionId 与 userId 转换、钉钉扫码登录、免登、redirect_uri 参数错误、应用不存在 900103、
+  回调 404，或贴出钉钉报错（permission deny、fail to find field、fields_error、
+  fetch_token_result_not_mapping_config、conditions 相关错误）时使用。
+  不用于机器人、小程序开发、审批 OpenAPI 直调的事件订阅开发本身。
 ---
 
-# 钉钉低代码集成
+# 钉钉审批 ↔ 自有系统整条链路
 
-这是一套**配置陪跑 + 排错诊断**的知识包，不是让 Agent 直接操作钉钉后台。钉钉开发者后台、连接平台、OA 审批后台、AI 表格自动化都是 GUI，点击操作由用户完成；Agent 负责选型、给出逐项配置值、生成表达式/JSON、核对其余配置、根据报错定位问题。每一步都要说清"这部分你在哪个后台点什么"，不要假装能代点。
+这是一套**配置陪跑 + 排错诊断**的知识包，不是让 Agent 直接操作钉钉后台。钉钉开发者后台、连接平台、OA 审批后台、AI 表格自动化、云服务器都是 GUI / 命令行，操作由用户完成；Agent 负责选型、给逐项配置值、生成表达式/JSON/契约、核对配置、按报错定位。每一步都要说清"在哪个后台点什么"。
 
-## 第一步：分诊
+## 第零步：分诊
 
-先判断用户要做的事属于哪类载体，再读对应手册。不要一上来把四个 reference 全读一遍。
+先定位到"段"，只读那一段。**不要一上来把 references 全读一遍。**
 
-| 用户想做的事 | 载体 | 读 |
+| 我要做的事 | 段 | 读 |
 |---|---|---|
-| 审批表单里的单选项要从 AI 表格动态读取 | 表单级连接器绑定 | `references/01-connector-oauth2.md` + `references/02-approval-form.md` |
-| 选了表单控件后，自动回显表里查到的字段 | 表单级连接器绑定 | 同上 |
-| 审批流程的第一个节点要自动派给表里的项目负责人 | 流程级连接器绑定 | `references/01` + `references/02` + `references/03-approval-process.md` |
-| 审批通过后，把审批明细逐条写进 AI 表格（含判重更新） | 连接平台连接流 | `references/01` + `references/04-connection-flow.md` |
-| 表里的 unionId 要批量换成 userId 回写 | AI 表格自动化流程 | `references/05-aitable-automation.md` |
-| 审批结束后要把数据写进**自有系统**（内网业务系统，不是 AI 表格）/ 看懂钉钉→公网边缘服务器→办公网内网系统的链路 / 同父域名拆分解析 / 断链补偿 | 连接器 HTTP 节点 + 公网边缘中转 | `references/09-http-callback-edge-relay.md` |
-| 不确定该用表单、流程还是连接流 | 先看下方"载体能力边界" | — |
-| 已经配了但报错/数据不对 | 排错 | `references/07-troubleshooting.md` |
+| 表单选项要从多维表动态读 / 选完自动回显表里字段 | S2 | [02-aitable-into-form.md](references/02-aitable-into-form.md) |
+| 审批节点要按表里的项目负责人自动派单 | S2 | 同上（§流程派单两段式） |
+| 表里只有 unionId，但表单/节点要 userId | S2 | 02 §人员标识回填 + [04b](references/04b-aitable-automation.md) |
+| 审批通过后要把数据取出来 / 不知道什么时候取、怎么触发 | S3 | [03-form-data-out.md](references/03-form-data-out.md) |
+| 要循环、条件分支、逐条判重写回 | S4 | [04-connection-flow.md](references/04-connection-flow.md) |
+| 表里 unionId 批量换 userId（定时批处理） | S4 | [04b-aitable-automation.md](references/04b-aitable-automation.md) |
+| 数据要出钉钉 → 腾讯云中间件 → 办公网自有系统 | S5/S6 | [05](references/05-edge-middleware.md) + [06](references/06-office-lan-pull.md) |
+| 现在走 OpenVPN 转发，想改成落盘+内网拉取 | S5/S6 | [11-migration-push-to-pull.md](references/11-migration-push-to-pull.md) |
+| 网页系统要接钉钉扫码登录 / 免登 / SSO | S7 | [07-login.md](references/07-login.md) |
+| 已经配了但报错/数据不对 | — | [09-troubleshooting.md](references/09-troubleshooting.md) |
+| 不确定整条链路怎么搭、为什么这么设计 | S0 | [00-pipeline.md](references/00-pipeline.md) |
 
-涉及具体表、字段、ID 或本项目已实测参数时，先读 `references/08-project-instance.md`。涉及 userId/unionId/operatorId 混用、字段值格式、时间字段时，读 `references/06-data-model.md`。
+涉及"这个位置要哪套 ID、字段值长什么样、时间为什么 +1 天"→ [08-data-model.md](references/08-data-model.md)。涉及本项目已实测的表/字段/ID/服务器 → [10-project-instance.md](references/10-project-instance.md)（含保密值，注意别外发）。
 
-## 载体能力边界
+## 六段流水线
 
-| 载体 | 触发时机 | 能做什么 | 不能做什么 |
-|---|---|---|---|
-| 审批**表单**连接器 | 表单加载时 / 控件值变化时 | 一次请求取数，回填下拉选项或文本控件 | 一次绑定只发一个请求，**不能链式调用**；联系人控件收不了 unionId |
-| 审批**流程**节点连接器 | 流程运行到该节点 | 引用表单控件值，决定审批人 | 拿不到表单级连接器的运行时出参，只能引用已落到控件里的值 |
-| **连接流** | 审批实例通过等事件 | 循环、条件分支、多次调用连接器 | 循环体逐条处理，没有"一次批量 upsert"；循环内子节点都计量 |
-| **AI 表格自动化** | 定时 / 表内事件 | 取数、循环、回写同一张表 | 与连接流是两个入口，发布机制不同 |
+```
+S0 决策 ─────────────────────────────────────────────┐
+   两条数据流向、两次鉴权、边界形态选型（推送 or 拉取）  │
+                                                      ▼
+S2 多维表 ──接入──▶ S3/S4 OA 表单与审批 ──接出──▶ S5 边界中间件 ──▶ S6 办公网自有系统
+   ▲  连接器（表单级/流程级）        │  连接器 HTTP 节点      │  腾讯云           │  内网应用
+   │                                │  或连接流              │  转发 or 落盘     │  主动拉取
+   └──────────── S4 反写（userId/状态回填）◀───────────────┘                  │
+                                                                             │
+S7 钉钉登录：用户身份侧，与上面数据链路正交（同一套企业应用或独立应用）◀────────┘
+```
 
-一个常见误区：以为"一个连接器只能发一个请求"。限制的是**每个绑定点**，不是连接器本身——表单绑定是一个点，流程节点是另一个点，两段式方案就是靠这两个点各调一次。
+一句话分工：**S2 是"表 → 表单"，S3/S4 是"表单 → 外面"，S5 是安检口与暂存地，S6 是数据真正落地的地方，S7 管"人怎么进来"。**
 
-## 跨场景铁律
+## 跨场景铁律（每条都对应真实事故）
 
-这些规则在多个场景反复踩坑，配置前先过一遍：
+1. **发布链**：连接器动作 → 保存并发布动作 → 发布连接器 → 审批模板重新发布。任缺一环都不生效。AI 表格自动化流程例外（改完即生效）。
+2. **连接流用创建时的快照**：连接器动作/请求头改完，只重新发布动作不够，**必须重建连接流**才用新配置——"调试成功、真实触发还是旧地址"就是这个。
+3. **出参必须自己声明**。官方 AI 表格连接器不暴露字段值（只有记录 ID/是否更多/游标）；要在表单回填就得自建 HTTP 连接器，用真实响应 JSON 导入出参。
+4. **表单下拉两行映射缺一不可**：`值列表 ← 字段值数组`、`ID列表 ← 记录 ID 数组`，长度一致。
+5. **数组映射要取下标**：`records` 是数组、文本控件是标量，映射 `records[0].fields.xxx`。
+6. **编码禁止手抄**。审批字段编码（`TextField_xxx`）随模板走，删控件/复制模板都会变。从"执行详情 → 入参 → 复制 JSON"照抄；不截图 OCR、不用中文显示名当键。
+7. **循环内容选整条记录**（含 `id`），循环体内引用"当前循环项"。选到 `.字段` 那层会退化成反复处理第一条（全绿无报错）。
+8. **`conditions` 是顶层数组**，子项 `{field, operator, value}`，`value` 必须非空数组。多套一层 object 报 JSON Array parsing error。
+9. **写表时 `fields` 的键 = 表格列头**，一字不差；参数名只能出现在值里。人员列直连 API 用 `[{"unionId":"..."}]`；下拉取 `.label`；日期 `LEFT(时间,10)` 存文本列。
+10. **两套 ID 各管一段**：表单联系人控件与审批节点要 **userId**；多维表人员列与 `operatorId` 要 **unionId**。表单级绑定不能链式调用，转换只能落到文本控件由流程节点做，或提前把 userId 写进表。
+11. **`operatorId` 是服务身份**，不是当前用户。固定一个长期不动的账号的 unionId 即正确设计。
+12. **边界只认幂等键**：进中间件的每条数据都必须带 `external_id`（用**审批实例 ID**），重推/重放/重试一律靠它去重。没有幂等键的推送方案迟早产生重复数据。
+13. **同步转发 vs 异步落盘，选一个并写进文档**。透明转发（隧道常连、请求同步穿透到内网）耦合重、钉钉侧超时约 5s；落盘+拉取把"接住"和"处理"解耦，是新项目默认。**不要两种混着用却没有明确哪条是主路径**。
+14. **登录与审批用不同应用**：审批链路的 HTTP 节点不需要钉钉应用凭据（静态令牌即可）；登录只开「登录」能力。轮换登录密钥不打断审批，反之亦然。
 
-1. **发布链**：连接器动作改完 → 保存并发布动作 → 发布连接器 → 审批模板重新发布。任何一环没发版都不生效。AI 表格自动化流程改完即生效，没有这套发布链。
-2. **出参必须自己声明**。官方 AI 表格连接器不暴露字段值（只有记录 ID/是否更多/游标），要在表单里回填字段就得自建 HTTP 连接器，用真实响应 JSON 导入出参。官方连接器出参带展示字段时才优先用官方。
-3. **表单下拉的两行映射缺一不可**：`值列表 ← 字段值数组`、`ID列表 ← 记录 ID 数组`，长度必须一致。
-4. **数组映射要取下标**：`records` 是数组，文本控件是标量，映射 `records[0].fields.xxx`，不能直接映射整个数组。
-5. **编码禁止手抄**。审批字段编码（`TextField_xxx`）随模板走，删控件、复制模板都会变。每次从"执行详情 → 入参 → 复制 JSON"里照抄；不要截图 OCR，不要用中文显示名当键。
-6. **循环内容选整条记录**（含 `id`），循环体内一律引用"当前循环项"，不要引用上游数组的固定下标。选到 `.字段` 那层会退化成反复处理第一条。
-7. **筛选条件 `conditions` 是顶层数组**，子项 `{field, operator, value}`，`value` 必须是非空数组。多套一层 object 会报 JSON Array parsing error。
-8. **写 AI 表格时，`fields` 的键 = 表格列头，一字不差**；参数名只能出现在值里。人员列直连 API 用 `[{"unionId":"..."}]` 对象数组；下拉取 `.label`；日期用 `LEFT(时间,10)` 存文本列。
-9. **OAuth2.0 的三个易错点**：`redirect_uri` 在"URL 查询参数"网格里填裸地址（编码交给平台）；获取/刷新 Token 的 `appKey/appSecret` 必须放在 **HTTP 请求体**并补 `Content-Type: application/json`；连接器重建后回调地址会变，必须同步回应用安全设置并发版。
-10. **operatorId 是服务身份，不是当前用户**。它是"这次读表以谁的身份做权限校验"，固定值即正确设计，不要试图在审批表单里动态取当前用户。
+## 两种边界形态（一句话选型）
+
+| | 形态 A：透明转发（现状/legacy） | 形态 B：落盘 + 拉取（目标/推荐） |
+|---|---|---|
+| 链路 | 钉钉 → nginx → relay → OpenVPN → 内网应用 | 钉钉 → nginx → 中间件落盘 → 内网应用**出站拉取** |
+| 成功语义 | 内网应用真的处理完才 200 | 中间件落盘即 200，处理另算 |
+| 依赖 | VPN 常连（断则全线停） | 内网能出站 HTTPS 即可 |
+| 补偿 | 仅断链期内存/落盘队列 | 天然可重放、可对账、可审计 |
+| 适用 | 已上线、不想动钉钉侧 | 新系统、或要甩掉 VPN 数据面 |
+
+细节与迁移路径见 [05](references/05-edge-middleware.md)、[06](references/06-office-lan-pull.md)、[11](references/11-migration-push-to-pull.md)。
 
 ## 工作方式
 
-**新建配置时**：
+**新建配置时**：①用分诊表定位段 → ②先列前置条件清单（应用权限/表权限/控件/发布状态/域名/服务器），缺什么让用户先补 → ③按手册逐阶段给值，每步说明"哪个后台、哪个菜单、填什么、容易错在哪" → ④每阶段让用户先验证（动作调试 200 / 表单回显有值 / 循环 index 跑满 / curl 打中间件 200）→ ⑤按该篇末尾验证清单收尾。
 
-1. 用分诊表确定载体，读对应 reference。
-2. 先列"前置条件清单"，缺什么让用户先补（应用权限、表权限、控件、发布状态）。
-3. 按手册的阶段逐步给配置值。每一步给出：在哪个后台、哪个菜单、字段填什么、容易错在哪。
-4. 每阶段结束让用户先跑一次验证（连接器动作调试 200、表单回显有值、循环 index 跑满），再进下一阶段。
-5. 收尾按 reference 末尾的验证清单逐项确认。
+**排错时**：①先查 [09-troubleshooting.md](references/09-troubleshooting.md)，按现象查不凭印象 → ②先要三样之一：完整报错文本、执行详情"复制"的入参 JSON、配置页截图；没有就先要 → ③按"现象 → 原因 → 验证 → 解决"给结论，一次只改一个变量 → ④改完提醒走发布链/重建连接流，再复测。
 
-**排错时**：
-
-1. 先读 `references/07-troubleshooting.md`，按现象查，不要凭印象猜。
-2. 让用户提供三样东西之一：完整报错文本、执行详情里"复制"的入参 JSON、或配置页截图。没有这些就先要，避免空对空排查。
-3. 按"现象 → 原因 → 验证 → 解决"给结论；一次只改一个变量。
-4. 改完提醒走发布链，再复测。
-
-**调试三板斧**（几乎所有坑都靠它们定位）：
-
-- **复制 JSON**：执行详情 → 入参 → "复制"，拿权威键名和实际值，禁止手抄。
-- **切换循环执行次数**：循环体内节点逐轮对比入参，两轮不同才对。
-- **二分定位**：`fields` 报格式错时只留嫌疑字段跑一轮，一轮锁定肇事列。
+**调试三板斧**：复制 JSON（拿权威键名）· 切换循环执行次数（两轮入参该不同）· 二分定位（只留嫌疑字段跑一轮）。
 
 ## 边界
 
-本 skill 不覆盖：
-
-- 外部系统接入钉钉登录（扫码登录、免登、SSO、`userAccessToken`、H5 微应用 `requestAuthCode`）
-- 审批 OpenAPI 直调、事件订阅、机器人、小程序开发
-- 钉钉后台本身的账号开通、组织架构管理
-
-遇到这些需求，明确说"当前知识包未覆盖"，不要用连接器 OAuth2.0 的经验硬套登录方案——两者都经过 `login.dingtalk.com/oauth2/auth`，但换到的是应用 token，不是用户登录态。
+不覆盖：机器人、小程序、审批 OpenAPI / 事件订阅接口本身的开发、钉钉后台组织架构管理、OpenVPN 服务端与 nginx 的通用运维教学（本包只给与本链路相关的配置要点与坑）。
 
 ## 文件索引
 
 | 文件 | 内容 |
 |---|---|
-| `references/01-connector-oauth2.md` | 自建应用、OAuth2.0 五步鉴权、HTTP 执行动作、发布链 |
-| `references/02-approval-form.md` | 表单动态下拉、字段回显、出参映射 |
-| `references/03-approval-process.md` | 流程节点审批人路由、unionId→userId 两段式 |
-| `references/04-connection-flow.md` | 连接流循环、条件分支、明细取值、判重更新、表达式 |
-| `references/05-aitable-automation.md` | AI 表格自动化循环回写 |
-| `references/06-data-model.md` | userId/unionId/operatorId、Notable API、字段值形态、时间 |
-| `references/07-troubleshooting.md` | 跨场景踩坑总表、报错决策树 |
-| `references/08-project-instance.md` | 本项目已实测参数与编码（含实例值，注意保密） |
-| `references/09-http-callback-edge-relay.md` | 审批后 HTTP 节点回调自有系统：公网边缘中转（nginx+relay）、同父域名拆分解析、OpenVPN 回内网、断链补偿队列、验证与排障 |
+| `00-pipeline.md` | 全景、六段职责、三套鉴权对照、ADR 决策记录、风险登记 |
+| `01-app-and-connector-auth.md` | 自建应用、连接器 OAuth2.0 五步、HTTP 动作、发布链、三套身份区别 |
+| `02-aitable-into-form.md` | 多维表→表单：动态下拉、字段回显、流程派单两段式、人员 userId 回填 |
+| `03-form-data-out.md` | 取数：四种触发机制对比、取到什么、何时最可靠、落点选择 |
+| `04-connection-flow.md` | 连接流：循环、条件分支、明细取值、判重更新、表达式与 19 条坑 |
+| `04b-aitable-automation.md` | AI 表格自动化：定时批处理、unionId→userId 回写 |
+| `05-edge-middleware.md` | 边界中间件：形态 A 转发（备案/解析/证书/补偿）、形态 B 落盘拉取、鉴权与幂等 |
+| `06-office-lan-pull.md` | 办公网拉取接入：租约+ack、游标、失败语义、调度方式选型、监控 |
+| `07-login.md` | 钉钉登录总纲：四路径分诊、主流程、账号模型红线 |
+| `07a-login-intranet.md` | 内网三条入口路径（0/A/B）与存量系统约束 |
+| `07b-login-public.md` | 公网部署（未实测骨架） |
+| `07c-login-server.md` | 服务端四端点实现、安全机制、验证清单 |
+| `07d-login-frontend.md` | 前端接入脚本与错误文案 |
+| `08-data-model.md` | userId/unionId/operatorId、多维表 API、字段值形态、时间假 Z |
+| `09-troubleshooting.md` | 合并排错总表（配置类 + 登录类）与决策树 |
+| `10-project-instance.md` | 本项目已实测参数与替换清单（含保密值） |
+| `11-migration-push-to-pull.md` | 转发→落盘拉取迁移 runbook、双通道灰度、回退 |
+| `assets/templates/` | 登录三件套模板（服务端协议、路由、前端） |
+| `scripts/client-dns-check.ps1` | 登录客户端 DNS/代理逐通道排障脚本 |
+
+## 沿革（2026-11 两包合并）
+
+原 `dingtalk-integration` + `dingtalk-login` 合并为本包，按流水线段重组。旧路径对照（供老笔记/老链接换算）：
+
+| 旧文件 | 新位置 |
+|---|---|
+| `dingtalk-integration/01-connector-oauth2.md` | `01-app-and-connector-auth.md` |
+| `dingtalk-integration/02-approval-form.md` | `02-aitable-into-form.md` |
+| `dingtalk-integration/03-approval-process.md` | 并入 `02-aitable-into-form.md`（§流程派单） |
+| `dingtalk-integration/04-connection-flow.md` | 不变 |
+| `dingtalk-integration/05-aitable-automation.md` | `04b-aitable-automation.md` |
+| `dingtalk-integration/06-data-model.md` | `08-data-model.md` |
+| `dingtalk-integration/07-troubleshooting.md` | `09-troubleshooting.md`（并入登录类） |
+| `dingtalk-integration/08-project-instance.md` | `10-project-instance.md` |
+| `dingtalk-integration/09-http-callback-edge-relay.md` | `05-edge-middleware.md`（保留形态 A，新增形态 B） |
+| `dingtalk-login/SKILL.md` | `07-login.md` |
+| `dingtalk-login/references/dingtalk-side.md` | 并入 `07-login.md` §第 1 步 |
+| `dingtalk-login/references/scenario-intranet.md` | `07a-login-intranet.md` |
+| `dingtalk-login/references/scenario-public.md` | `07b-login-public.md` |
+| `dingtalk-login/references/server-impl.md` | `07c-login-server.md` |
+| `dingtalk-login/references/frontend-impl.md` | `07d-login-frontend.md` |
+| `dingtalk-login/references/troubleshooting.md` | 并入 `09-troubleshooting.md` §登录类 |
+| `dingtalk-login/assets/*`、`scripts/*` | 原样移到本包 `assets/`、`scripts/` |
+
+新增：`00-pipeline.md`、`03-form-data-out.md`、`06-office-lan-pull.md`、`11-migration-push-to-pull.md`。

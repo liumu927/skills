@@ -69,6 +69,21 @@
 - 循环出参 index 跑到 N-1 = 跑满 N 次：✅
 - 通讯录连接器在自动化流程里同样可用：✅
 
+## 边界中间件与内网（已实测形态 A）
+
+| 项 | 值 |
+|---|---|
+| 回调域名 | `<domain>`（父域 `<parent-domain>`，ICP 接入商=腾讯云） |
+| 公网解析 | 公网 DNS → 腾讯云服务器公网 IP（钉钉云端走这条） |
+| 内网解析 | 办公网内网 DNS → <host> 内网 IP `<nuc-ip>`（拆分解析） |
+| nginx | 443，TLS 终结 + 仅回调路径白名单，其余 404 |
+| relay | 本机 `:4330`，令牌校验 + 方法/路径白名单 + 断链落盘队列 + 30s 探测重放 |
+| 隧道 | OpenVPN 客户端，VPN 账号 ACL 仅放行 `<host>:4321` |
+| 源站 | 办公网 <host> 业务系统 `:4321`（upsert / external-delete / 查询 / revoked） |
+| 边缘令牌 | 钉钉连接器请求头 `X-API-Token`；与内部令牌分离，切换期可配同值 |
+| 回调路径（5 条） | upsert、external-delete、`DELETE external/:id`、`GET external/:id`、`GET revoked` |
+| 超时 | relay 8s（须小于钉钉节点约 5s，实测后收紧） |
+
 ## 复用时的替换清单
 
 换组织或换表时，以下值必须全部重取，不要沿用：
@@ -79,3 +94,5 @@
 4. operatorId 的 unionId
 5. 审批模板的所有字段编码（跑一轮取执行入参 JSON）
 6. 表格列头名称（`fields` 的键）
+7. 中间件：域名/证书、边缘令牌、consumer 名、VPN ACL 或（形态 B）内网出口放行
+8. 若一并接入登录：重定向 URL、`DINGTALK_REDIRECT_URI`、证书、DHCP 保留

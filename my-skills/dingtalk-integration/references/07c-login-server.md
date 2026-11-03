@@ -57,7 +57,7 @@
 |---|---|---|
 | `DINGTALK_CLIENT_ID` | 是 | AppKey |
 | `DINGTALK_CLIENT_SECRET` | 是 | AppSecret,只走 env 文件注入 |
-| `DINGTALK_REDIRECT_URI` | 是 | 回调地址,必须与钉钉登记条目匹配(见 dingtalk-side.md) |
+| `DINGTALK_REDIRECT_URI` | 是 | 回调地址,必须与钉钉登记条目匹配(见 07-login.md) |
 | `DINGTALK_LANDING_URL` | 否 | 登录回跳落点,默认 `/` |
 | `DINGTALK_DEFAULT_ROLE` | 否 | 首登建号角色,默认 viewer |
 
