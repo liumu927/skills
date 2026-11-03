@@ -148,4 +148,25 @@ S7 钉钉登录：用户身份侧，与上面数据链路正交（用独立应�
 | `dingtalk-login/references/troubleshooting.md` | 并入 `09-troubleshooting.md` §登录类 |
 | `dingtalk-login/assets/*`、`scripts/*` | 原样移到本包 `assets/`、`scripts/` |
 
-新增：`00-pipeline.md`、`03-form-data-out.md`、`06-office-lan-pull.md`、`11-migration-push-to-pull.md`。
+新增：`00-pipeline.md`、`03-form-data-out.md`、`06-office-lan-pull.md`、`11-migration-push-to-pull.md`、`12-compliance-gate.md`。
+
+## 维护者：发布与同步
+
+本 skill 同时发布到两个平台，**只在一处修改**（源仓库 `skills/my-skills/dingtalk-integration`），然后一条命令同步：
+
+| 平台 | 内容范围 | 说明 |
+|---|---|---|
+| GitHub（`origin`） | 整个 skills 仓库（全部 skill） | 完整镜像 |
+| 内网 GitLab（`gitlab`） | 仅本 skill 目录，位于 `dingtalk-integration/` 下 | 内网共享 skills 的子集视图 |
+
+```bash
+cd <skills 仓库根>
+git sync      # = git push origin main && sh ./sync-gitlab-skills.sh
+```
+
+要点：
+
+- **GitLab 侧是发布视图，不要在那里改**——它的树由源仓库生成，直接提交会在下次同步时被静默覆盖（快进推送、无冲突提示）。
+- 加第二个共享 skill：`sh sync-gitlab-skills.sh dingtalk-integration <另一个>`，或改脚本里的默认 `SKILLS` 列表。
+- 两个平台**历史互相独立**（GitLab 侧由脚本生成提交），不要互推。
+- 内部实值文件（`10b-instance-values.md`）已在 `.gitignore`，**不要用 `git add -f` 强行加入**。
