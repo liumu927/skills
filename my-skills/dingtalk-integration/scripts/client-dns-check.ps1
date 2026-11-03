@@ -1,4 +1,4 @@
-﻿# 客户端 DNS / 代理自检（钉钉登录排障通用版）
+# 客户端 DNS / 代理自检（钉钉登录排障通用版）
 #
 # 用途：系统地址"时灵时不灵"、扫码后回调落到 404、或「nslookup 正确但浏览器打不开」时，
 #       在**出问题的那台机器**上跑本脚本，一次性看清所有解析/代理通道。
@@ -6,7 +6,7 @@
 # 用法：
 #   powershell -NoProfile -ExecutionPolicy Bypass -File client-dns-check.ps1 -Domain <登录域名> -OriginIp <源站内网IP>
 #   可选参数：-Port <端口，默认 443 不带端口显示>  -Scheme <https|http，默认 https>  -ProbePath <健康检查路径，默认 healthz>
-#   例：./client-dns-check.ps1 -Domain <system>.example.com -OriginIp <client-ip> -Port 4322
+#   例：./client-dns-check.ps1 -Domain login.example.com -OriginIp 10.1.2.14 -Port 4322
 #
 # 判读标准：该域名必须解析到 -OriginIp 指定的源站；任何解析器/缓存给出其它公网 IP 都是隐患。
 # （若场景是"裸 IP + HTTP"访问则无 DNS 问题可言，本脚本不适用——问题多半在代理或证书页拦截。）

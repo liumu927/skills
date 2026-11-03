@@ -1,0 +1,27 @@
+[Unit]
+Description=DingTalk inbound puller (one pass)
+Documentation=https://<内部文档地址>
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=dingtalk-pull
+Group=dingtalk-pull
+WorkingDirectory=/opt/dingtalk-puller
+EnvironmentFile=/etc/dingtalk-puller/.env
+ExecStartPre=/usr/bin/node --check /opt/dingtalk-puller/pull.mjs
+# --once：拉一批（有新数据会连续拉空）后退出，由 timer 驱动
+ExecStart=/usr/bin/node /opt/dingtalk-puller/pull.mjs --once
+TimeoutStartSec=120
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/dingtalk-puller/data
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dingtalk-pull

@@ -1,0 +1,14 @@
+[Unit]
+Description=Poll DingTalk edge relay every 30s
+
+[Timer]
+# 开机 1 分钟后开始，之后每 30 秒一次
+OnBootSec=1min
+OnUnitActiveSec=30s
+AccuracySec=1s
+# 错过的执行不补（陈旧数据晚到没有意义），下一次正常执行会一并拉走
+Persistent=false
+Unit=dingtalk-pull.service
+
+[Install]
+WantedBy=timers.target

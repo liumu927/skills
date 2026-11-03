@@ -31,11 +31,12 @@ description: >-
 | 表里 unionId 批量换 userId（定时批处理） | S4 | [04b-aitable-automation.md](references/04b-aitable-automation.md) |
 | 数据要出钉钉 → 腾讯云中间件 → 办公网自有系统 | S5/S6 | [05](references/05-edge-middleware.md) + [06](references/06-office-lan-pull.md) |
 | 现在走 OpenVPN 转发，想改成落盘+内网拉取 | S5/S6 | [11-migration-push-to-pull.md](references/11-migration-push-to-pull.md) |
+| **落盘方案能不能过合规**（数据留在公网服务器） | S0 | [12-compliance-gate.md](references/12-compliance-gate.md) |
 | 网页系统要接钉钉扫码登录 / 免登 / SSO | S7 | [07-login.md](references/07-login.md) |
 | 已经配了但报错/数据不对 | — | [09-troubleshooting.md](references/09-troubleshooting.md) |
 | 不确定整条链路怎么搭、为什么这么设计 | S0 | [00-pipeline.md](references/00-pipeline.md) |
 
-涉及"这个位置要哪套 ID、字段值长什么样、时间为什么 +1 天"→ [08-data-model.md](references/08-data-model.md)。涉及本项目已实测的表/字段/ID/服务器 → [10-project-instance.md](references/10-project-instance.md)（含保密值，注意别外发）。
+涉及"这个位置要哪套 ID、字段值长什么样、时间为什么 +1 天"→ [08-data-model.md](references/08-data-model.md)。需要**填空用的参数模板**（每项从哪取、怎么验证）→ [10-project-instance.md](references/10-project-instance.md)（脱敏，可外发）；本组织**已实测的真实值**在 [10b-instance-values.md](references/10b-instance-values.md)（含内部域名/ID，勿外发）。
 
 ## 六段流水线
 
@@ -114,8 +115,11 @@ S7 钉钉登录：用户身份侧，与上面数据链路正交（用独立应�
 | `07d-login-frontend.md` | 前端接入脚本与错误文案 |
 | `08-data-model.md` | userId/unionId/operatorId、多维表 API、字段值形态、时间假 Z |
 | `09-troubleshooting.md` | 合并排错总表（配置类 + 登录类）与决策树 |
-| `10-project-instance.md` | 本项目已实测参数与替换清单（含保密值） |
+| `10-project-instance.md` | 实例参数**填空模板**（占位符 + 从哪取 + 怎么验证），脱敏可外发 |
+| `10b-instance-values.md` | 本组织**真实实例值**（内部域名/表 ID/unionId/IP），勿外发 |
 | `11-migration-push-to-pull.md` | 转发→落盘拉取迁移 runbook、双通道灰度、回退 |
+| `12-compliance-gate.md` | **合规闸门**：落盘前的五问、三种结论与预案（含字段级加密绕行）、评审清单与签字表 |
+| `assets/deploy/` | **可执行部署骨架**：relay 参考实现、puller、nginx、systemd、.env.example、Postgres schema（已冒烟自测） |
 | `assets/templates/` | 登录三件套模板（服务端协议、路由、前端） |
 | `scripts/client-dns-check.ps1` | 登录客户端 DNS/代理逐通道排障脚本 |
 

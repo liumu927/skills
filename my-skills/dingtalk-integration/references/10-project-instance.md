@@ -1,98 +1,107 @@
-# 本项目实例参数
+# 10 实例参数模板（脱敏，可外发）
 
-本文件记录已实测环境的具体值，便于在同一套钉钉组织内复用。**这些值只对当前组织有效**，换组织/换表一律重新获取。Client Secret 不落盘，使用时从开发者后台凭证页或密码管理器取。
+这是**填空模板**：把 `<...>` 换成你的值即可。真实填写后的值请放到 `10b-instance-values.md`（内部文件，勿外发），不要把实值写回本文件——这样整个 skill 包可以安全地给同事、进公开仓库。
 
-## 项目数据（审批下拉 + 负责人路由）
+每个值都标了**从哪取**和**怎么验证**，避免"抄了一个不知道对不对的 ID"。
 
-| 项 | 值 |
-|---|---|
-| 自建应用 | 项目数据服务 |
-| Client ID | `<client-id>` |
-| 关键权限点 | `Notable.Base.Read.All` |
-| 应用能力 | 网页应用（首页可占位） |
-| 连接器 | 获取项目名称列表（`<connector-id>`） |
-| 多维表 baseId | `<base-id-1>` |
-| 数据表名 | `数据表` |
-| **数据表 ID（推荐）** | `<sheet-id>` |
-| operatorId（unionId） | `<operator-union-id>` |
+## 一、钉钉应用与连接器
 
-已验证：
+| 项 | 占位符 | 从哪取 | 怎么验证 |
+|---|---|---|---|
+| 自建应用名 | `<app-name>` | 开发者后台应用列表 | — |
+| Client ID（AppKey） | `<client-id>` | 应用详情 → 凭证 | 连接器鉴权调试 200 |
+| Client Secret | **不落文件** | 凭证页/密码管理器 | `accessToken` 探测 200 |
+| 应用权限点 | `<permissions>` | 应用 → 权限管理 | 读表 200 即证明 |
+| 应用能力 | 网页应用（占位首页可） | 应用 → 添加应用能力 | 授权页不报 900103 |
+| 连接器名 | `<connector-name>` | 连接平台 → 我的连接器 | 动作调试 200 |
+| 连接器 ID | `<connector-id>` | 连接器详情页 | — |
+| 鉴权方式 | OAuth2.0 凭证 | 连接器 → 鉴权设置 | 凭证状态非"待更新" |
+| 授权回调地址 | `<connector-callback>` | 鉴权设置第 2 步自动生成 | 与应用「重定向 URL」一致 |
+| Token 刷新周期 | `5400` 秒 | 鉴权设置 | 临时调 300 秒连刷 2–3 次成功 |
 
-- 应用 token 调 `records/list` 读多维表：200
-- 平台凭证自动换 token + 注入请求头：200
-- 5400 秒自动刷新 + 400 兜底：已配置（建议补 401）
-- 表单下拉动态选项 + 负责人回显 + 流程节点派单：全链路跑通
-- 已知数据问题：项目名有重复（如"图形工作站"×2），需治理；重复名会影响下拉显示和派单正确性
+## 二、多维表
 
-## 资产领用/变更（连接流判重更新）
+| 项 | 占位符 | 从哪取 | 怎么验证 |
+|---|---|---|---|
+| baseId | `<base-id>` | 表链接 / 文档信息面板 | `GET /sheets` 200 |
+| 数据表 ID（优先） | `<sheet-id>` | `GET /sheets` 返回的短 ID | 用它替代中文表名 |
+| 数据表名 | `<sheet-name>` | 表标签页 | 仅备查 |
+| `operatorId`（unionId） | `<operator-union-id>` | 「查询用户详情」按人查 | 读表 200 |
+| 表格列头（`fields` 键） | `<col-a>, <col-b>` | 表列标题 | 写入 200 无 `fail to find field` |
+| 人员列 | `<person-col>` | 表列 | 写入用 `[{"unionId":"..."}]` |
 
-审批模板字段编码（**对应写作时模板，换模板必须重取**）：
+## 三、审批模板
 
-| 表格列 | 表单字段 | 编码 |
-|---|---|---|
-| 设备序列号（领用单） | 产品序列号 | `TextField_1L08T4SNTE328` |
-| 规格型号（领用单） | 资产型号 | `TextField_31IT80NMT2S0` |
-| 唯一识别码（领用单） | 唯一识别码 | `TextField_1ESSHW5Y7VVGG` |
-| 资产名称 | 资产名称 | `TextField-K2AD4O5B` |
-| 设备序列号（变更单） | 产品序列号 | `TextField_1TW0Q7XAFFFK0` |
-| 唯一识别码（变更单） | 唯一识别码 | `TextField_10FNEYF39M800` |
-| 位置（变更单） | 后存放位置 | `DDSelectField_V97PQRFM2KG0` |
-| 使用人（变更单） | 后使用人 | `InnerContactField_NUD2OJMLF400` |
-| 前使用人 | — | `TextField_SWG0Q82YBAO0` |
-| 前存放位置 | — | `DDSelectField_H5JBHE7M87K0` |
+| 项 | 占位符 | 从哪取 | 怎么验证 |
+|---|---|---|---|
+| 审批模板名 | `<template-name>` | OA 审批后台 | — |
+| 字段编码（每控件一个） | `TextField_<...>` 等 | **执行详情 → 入参 → 复制 JSON** | 表单回显/写入有值 |
+| 明细控件编码 | `<detail-field-code>` | 同上 | 循环能取到数组 |
+| 审批实例 ID 字段 | `external_id` ← 审批实例 ID | 流程节点变量 | 重复推送 `duplicate:true` |
 
-已验证：
+> 编码**禁止手抄/OCR**：删控件、复制模板都会换编码，每次从执行入参 JSON 复制。
 
-- 循环内 chip + 原始编码取值：✅；中文显示名取值：❌
-- `JACKSONJSONPATHEVAL` 处理连字符编码/数组下标/两级 label：✅
-- 人员列直连 API `[{"unionId":...}]`：✅；裸字符串、字符串数组：❌
-- `LIST()` 构造数组、单引号键对象字面量：✅
-- 查询 `records/list` 的 `filter.conditions` 顶层数组 + `value` 非空数组：✅
-- 时间 `2026-10-19T16:41Z` = 本地时间 16:41，跨零点写入 +1 天：❌ 直写日期列
-- 自定义连接器开"入参映射"不配规则 → 参数静默丢失：✅ 实测
-- 循环内子节点均计量，判重更新约每条明细 2~3 次调用：✅
+## 四、边界中间件（形态 B；形态 A 见 05 §2）
 
-## 成果审批管理（自动化回写 userid）
+| 项 | 占位符 | 从哪取 | 怎么验证 |
+|---|---|---|---|
+| 回调域名 | `<domain>` | 你自己的 DNS | `dig +short <domain>` |
+| 公网 IP | `<edge-ip>` | 云控制台 | `curl --resolve` 通 |
+| consumer 名 | `<system>-<env>` | 自定义，如 `<system>-prod` | 与 env 里键一致 |
+| 边缘令牌 | `<edge-token>` | `openssl rand -hex 24` | 入库 200；错令牌 401 |
+| 消费方令牌 | `<consumer-token>` | 同上，**换一个** | 拉取 200；错令牌 401 |
+| admin 令牌 | `<admin-token>` | 同上，**再换一个** | `/api/admin/stats` 200 |
+| 数据目录 | `/var/lib/dingtalk-relay` | `.env` `DATA_DIR` | `ls` 有 `messages.log` |
+| 保留期 | `<n>` 天 | `.env` `RETENTION_DAYS` | 到期后 `delivered` 被清 |
+| 证书 | `<domain>.fullchain.pem` | 云证书/DV | `openssl s_client` 链完整 |
+| 内网出口 | 放行 443 → `<domain>` | 防火墙策略 | 内网 `curl https://<domain>/healthz` |
+| 内网系统地址 | `http://<nuc-ip>:<port>` | 内网固定 IP | 本机 curl 通 |
+| 内网落库表/路径 | `<local-store>` | 你的系统 | 条数与 `delivered` 一致 |
 
-| 项 | 值 |
-|---|---|
-| 表 baseId | `<base-id-2>` |
-| 表名 | `数据表` |
-| 节点2 pageSize | 100 |
-| 循环内容 | `节点2:结果.记录[*]` |
-| 最大循环条数 | 100（界面默认，最多 500） |
+## 五、登录（若一并接入）
 
-已验证：
+| 项 | 占位符 | 从哪取 | 怎么验证 |
+|---|---|---|---|
+| 登录应用 Client ID/Secret | `<login-client-id>` / `<login-secret>` | 开放平台（**与审批应用分开**） | `/diag` 配置齐全 |
+| 重定向 URL | `<https://domain/api/auth/dingtalk/callback>` | 登录与分享 | 与 `DINGTALK_REDIRECT_URI` 逐字符一致 |
+| 权限 | `Contact.User.Read` | 权限管理 | 取用户信息 200 |
+| 发布状态 | 已发布 | 版本管理 | 改完必须重发版 |
+| DHCP 保留 | `<ip>` → `<mac>` | 路由器 | 重启后 IP 不变 |
 
-- 循环内容选 `记录[*]` + 体内引用循环当前项.id：✅ 每条依次回写
-- 选 `记录[*].字段`：❌ 循环项无 id，退化为反复处理第一条（全节点绿、无报错）
-- 循环出参 index 跑到 N-1 = 跑满 N 次：✅
-- 通讯录连接器在自动化流程里同样可用：✅
+## 六、填写顺序（有依赖，别乱序）
 
-## 边界中间件与内网（已实测形态 A）
+```
+1 建自建应用 + 权限 + 网页应用能力
+2 建连接器 → 拿到授权回调地址 → 回填到应用「重定向 URL」→ 发版
+3 OAuth2.0 五步 + 添加账户 + 鉴权调试 200
+4 取 baseId / sheetId / operatorId（GET /sheets、查询用户详情）
+5 建执行动作 → 导入真实响应 JSON 声明出参 → 发布动作 + 发布连接器
+6 审批模板加控件 → 配表单映射 / 流程节点 → 发版
+7 跑一轮审批 → 从执行详情复制字段编码（此时才拿得到）
+8 中间件：域名/证书/令牌 → 入库 + 拉取 + ack 三接口验证
+9 钉钉 HTTP 节点指向中间件 → 重建连接流 → 端到端
+10（可选）登录：另开子域 → 四端点 → 前端 → 端到端
+```
 
-| 项 | 值 |
-|---|---|
-| 回调域名 | `<domain>`（父域 `<parent-domain>`，ICP 接入商=腾讯云） |
-| 公网解析 | 公网 DNS → 腾讯云服务器公网 IP（钉钉云端走这条） |
-| 内网解析 | 办公网内网 DNS → <host> 内网 IP `<nuc-ip>`（拆分解析） |
-| nginx | 443，TLS 终结 + 仅回调路径白名单，其余 404 |
-| relay | 本机 `:4330`，令牌校验 + 方法/路径白名单 + 断链落盘队列 + 30s 探测重放 |
-| 隧道 | OpenVPN 客户端，VPN 账号 ACL 仅放行 `<host>:4321` |
-| 源站 | 办公网 <host> 业务系统 `:4321`（upsert / external-delete / 查询 / revoked） |
-| 边缘令牌 | 钉钉连接器请求头 `X-API-Token`；与内部令牌分离，切换期可配同值 |
-| 回调路径（5 条） | upsert、external-delete、`DELETE external/:id`、`GET external/:id`、`GET revoked` |
-| 超时 | relay 8s（须小于钉钉节点约 5s，实测后收紧） |
+## 七、换组织/换表时的替换清单
 
-## 复用时的替换清单
+换一套环境时以下值**全部重取**，不要沿用：
 
-换组织或换表时，以下值必须全部重取，不要沿用：
+1. Client ID/Secret + 权限点 + 发版
+2. 连接器回调地址 → 应用「重定向 URL」→ 发版 → 重新添加账户
+3. baseId、sheetId（`GET /sheets`）
+4. `operatorId` 的 unionId
+5. 审批模板全部字段编码（跑一轮取 JSON）
+6. 表格列头名称
+7. 中间件：域名/证书、三套令牌、consumer 名
+8. 内网出口放行、内网系统地址
+9. （若接登录）重定向 URL、`DINGTALK_REDIRECT_URI`、证书、DHCP 保留
 
-1. Client ID / Secret + 应用权限 + 发版
-2. 连接平台授权回调地址 → 应用到安全设置 → 发版
-3. baseId、表 ID（用 `GET /sheets` 取）
-4. operatorId 的 unionId
-5. 审批模板的所有字段编码（跑一轮取执行入参 JSON）
-6. 表格列头名称（`fields` 的键）
-7. 中间件：域名/证书、边缘令牌、consumer 名、VPN ACL 或（形态 B）内网出口放行
-8. 若一并接入登录：重定向 URL、`DINGTALK_REDIRECT_URI`、证书、DHCP 保留
+## 八、验证"填对了"
+
+不需要真实审批也能做的自检：
+
+- [ ] 连接器动作调试页点一次 → 200 且返回真实字段（证明应用/权限/表对了）
+- [ ] `curl --resolve` 打中间件 `/healthz` → `{"ok":true}`（证明域名/DNS/证书对了）
+- [ ] 入库一条 → 重复一条 → `duplicate:true`（证明幂等键对了）
+- [ ] 内网拉一次 → ack → `stats.delivered == 1`（证明三套令牌对了）

@@ -16,6 +16,8 @@
 
 **调度方式**：systemd timer / cron / 常驻 Node 进程（`setInterval` + 指数退避）都可以。**不要**用"用户打开页面时顺便拉"——数据同步不该依赖有人访问。
 
+参考实现与 systemd timer 骨架见 `assets/deploy/puller/pull.mjs`、`assets/deploy/systemd/dingtalk-pull.{service,timer}`。
+
 ## 二、消费端契约（照这个写就不会错）
 
 ```

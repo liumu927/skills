@@ -1,0 +1,47 @@
+[Unit]
+Description=DingTalk edge relay (store-and-forward, form B)
+Documentation=https://<内部文档地址>
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dingtalk-relay
+Group=dingtalk-relay
+WorkingDirectory=/opt/dingtalk-relay
+
+# 配置来自独立 env 文件（0600），不写进单元文件
+EnvironmentFile=/etc/dingtalk-relay/.env
+ExecStartPre=/usr/bin/node --check /opt/dingtalk-relay/server.mjs
+ExecStart=/usr/bin/node /opt/dingtalk-relay/server.mjs
+
+Restart=always
+RestartSec=2
+# 落盘型服务：启动即恢复，不需要长时间 StopTimeout
+TimeoutStopSec=20
+LimitNOFILE=65535
+
+# ---- 最小权限 ----
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+# 只允许写数据目录（Relay 的唯一持久化位置）
+ReadWritePaths=/var/lib/dingtalk-relay
+# 日志走 journald，不写文件
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dingtalk-relay
+
+# 加固说明：不要加 MemoryDenyWriteExecute=yes —— Node 需要 JIT，加了会启动即崩。
+
+[Install]
+WantedBy=multi-user.target
