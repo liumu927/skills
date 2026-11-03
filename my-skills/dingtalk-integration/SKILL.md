@@ -36,7 +36,9 @@ description: >-
 | 已经配了但报错/数据不对 | — | [09-troubleshooting.md](references/09-troubleshooting.md) |
 | 不确定整条链路怎么搭、为什么这么设计 | S0 | [00-pipeline.md](references/00-pipeline.md) |
 
-涉及"这个位置要哪套 ID、字段值长什么样、时间为什么 +1 天"→ [08-data-model.md](references/08-data-model.md)。需要**填空用的参数模板**（每项从哪取、怎么验证）→ [10-project-instance.md](references/10-project-instance.md)（脱敏，可外发）；本组织**已实测的真实值**在 [10b-instance-values.md](references/10b-instance-values.md)（含内部域名/ID，勿外发）。
+涉及"这个位置要哪套 ID、字段值长什么样、时间为什么 +1 天"→ [08-data-model.md](references/08-data-model.md)。需要**填空用的参数模板**（每项从哪取、怎么验证）→ [10-project-instance.md](references/10-project-instance.md)。
+
+> 本组织的真实实例值**不在本包内**：请自行维护一份本地文件（建议 `references/10b-instance-values.md`，已在 `.gitignore` 中），只在本机保存，不要提交、不要外发。
 
 ## 六段流水线
 
@@ -115,8 +117,7 @@ S7 钉钉登录：用户身份侧，与上面数据链路正交（用独立应�
 | `07d-login-frontend.md` | 前端接入脚本与错误文案 |
 | `08-data-model.md` | userId/unionId/operatorId、多维表 API、字段值形态、时间假 Z |
 | `09-troubleshooting.md` | 合并排错总表（配置类 + 登录类）与决策树 |
-| `10-project-instance.md` | 实例参数**填空模板**（占位符 + 从哪取 + 怎么验证），脱敏可外发 |
-| `10b-instance-values.md` | 本组织**真实实例值**（内部域名/表 ID/unionId/IP），勿外发 |
+| `10-project-instance.md` | 实例参数**填空模板**（占位符 + 从哪取 + 怎么验证），可外发 |
 | `11-migration-push-to-pull.md` | 转发→落盘拉取迁移 runbook、双通道灰度、回退 |
 | `12-compliance-gate.md` | **合规闸门**：落盘前的五问、三种结论与预案（含字段级加密绕行）、评审清单与签字表 |
 | `assets/deploy/` | **可执行部署骨架**：relay 参考实现、puller、nginx、systemd、.env.example、Postgres schema（已冒烟自测） |

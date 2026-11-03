@@ -23,3 +23,6 @@ Thumbs.db
 # Cursor history / local
 .specstory/
 .cursorindexingignore
+
+# 本组织内部实例值（含域名/ID/unionId/IP），只在本机保留，禁止入库
+my-skills/dingtalk-integration/references/10b-instance-values.md
