@@ -167,6 +167,10 @@ git sync      # = git push origin main && sh ./sync-gitlab-skills.sh
 要点：
 
 - **GitLab 侧是发布视图，不要在那里改**——它的树由源仓库生成，直接提交会在下次同步时被静默覆盖（快进推送、无冲突提示）。
+- 脚本已带**防覆盖守护**：远端最新提交若不是自动发布产生的（主题不以 `sync(` 开头），同步会**中止**并列出会被覆盖的差异与作者。此时二选一：
+  - `sh sync-gitlab-skills.sh --import` —— 把同事的改动按路径映射打回源仓库工作区，复查后自行提交（推荐，不丢东西）；
+  - `FORCE_OVERWRITE=1 sh sync-gitlab-skills.sh` —— 确认可丢弃，强制覆盖。
+  - 注意：`--import` 提交后，下一个真实改动推送仍需一次 `FORCE_OVERWRITE=1`，之后恢复正常。
 - 加第二个共享 skill：`sh sync-gitlab-skills.sh dingtalk-integration <另一个>`，或改脚本里的默认 `SKILLS` 列表。
 - 两个平台**历史互相独立**（GitLab 侧由脚本生成提交），不要互推。
 - 内部实值文件（`10b-instance-values.md`）已在 `.gitignore`，**不要用 `git add -f` 强行加入**。
